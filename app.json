@@ -3,9 +3,20 @@
     "name": "agv-fleet-terminal",
     "slug": "agv-fleet-terminal",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0E141B",
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow the fleet terminal to scan bin and pallet barcodes.",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ]
+    ],
     "ios": {
       "supportsTablet": true
     },
