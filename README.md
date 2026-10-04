@@ -45,10 +45,21 @@ Screens do not change. They only see `FleetDataSource`.
 
 ## Screens
 
-- **Fleet Dashboard.** Latency, active zone, emergency stop and release, fleet counts, and a short event ticker.
-- **Fleet Monitor.** Warehouse floor in SVG. Tap a marker for speed, battery, destination, and faults.
-- **Task Terminal.** Scan or type a bin, scan or type a pallet, choose an AGV and a waypoint, then dispatch.
-- **Diagnostics.** Filter alarms by WARNING or CRITICAL and clear them. Clearing an optical obstruction lets that vehicle resume.
+**Fleet Dashboard.** Latency, active zone, emergency stop and release, fleet counts, and a short event ticker.
+
+![Fleet Dashboard](docs/screenshots/FleetDashboard.png)
+
+**Fleet Monitor.** Warehouse floor in SVG. Tap a marker for speed, battery, destination, and faults.
+
+![Fleet Monitor](docs/screenshots/FleetMonitor.png)
+
+**Task Terminal.** Scan or type a bin, scan or type a pallet, choose an AGV and a waypoint, then dispatch.
+
+![Task Terminal](docs/screenshots/TaskTerminal.png)
+
+**Diagnostics.** Filter alarms by WARNING or CRITICAL and clear them. Clearing an optical obstruction lets that vehicle resume.
+
+![Diagnostics](docs/screenshots/Diagnostics.png)
 
 ## Architecture
 
