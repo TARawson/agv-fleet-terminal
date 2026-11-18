@@ -1,5 +1,8 @@
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { MetricCard } from '../components/MetricCard';
+import { alarmText } from '../i18n/alarmText';
 import { useFleet, type FleetEvent } from '../hooks/useFleetTelemetry';
 import type { AGVTelemetry } from '../types/telemetry';
 import type { ConnectionState } from '../services/FleetDataSource';
@@ -13,17 +16,17 @@ function activeZone(fleet: AGVTelemetry[]): string {
   return west >= fleet.length - west ? 'WEST' : 'EAST';
 }
 
-function latencyLabel(connection: ConnectionState): string {
+function latencyLabel(connection: ConnectionState, t: TFunction): string {
   if (connection.status === 'offline') {
-    return 'OFFLINE';
+    return t('link.OFFLINE');
   }
   if (connection.status === 'connecting') {
-    return 'LINK';
+    return t('link.connecting');
   }
   if (connection.latencyMs === null) {
-    return 'LIVE';
+    return t('link.live');
   }
-  return `${Math.round(connection.latencyMs)} ms`;
+  return t('link.latency', { ms: Math.round(connection.latencyMs) });
 }
 
 function latencyColor(connection: ConnectionState): string {
@@ -36,8 +39,19 @@ function latencyColor(connection: ConnectionState): string {
   return colors.accent;
 }
 
-function formatTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+function formatTime(timestamp: number, language: string): string {
+  return new Date(timestamp).toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function eventMessage(event: FleetEvent, t: TFunction): string {
+  const params = { ...event.messageParams };
+  if (params.place === '') {
+    params.place = t('events.waypoint');
+  }
+  if (typeof params.code === 'string') {
+    params.message = alarmText(t, params.code, String(params.message ?? ''));
+  }
+  return t(event.messageKey, params);
 }
 
 function eventColor(event: FleetEvent): string {
@@ -51,6 +65,7 @@ function eventColor(event: FleetEvent): string {
 }
 
 export function DashboardScreen() {
+  const { t, i18n } = useTranslation();
   const { fleet, connection, events, triggerEmergencyStop, releaseEmergencyStop } = useFleet();
   const estopped = fleet.length > 0 && fleet.every((agv) => agv.status === 'ESTOP');
   const active = fleet.filter((agv) => agv.status === 'NAVIGATING' || agv.status === 'IDLE').length;
@@ -61,34 +76,36 @@ export function DashboardScreen() {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.topBar}>
         <View style={[styles.pill, { borderColor: latencyColor(connection) }]}>
-          <Text style={[styles.pillText, { color: latencyColor(connection) }]}>{latencyLabel(connection)}</Text>
+          <Text style={[styles.pillText, { color: latencyColor(connection) }]}>{latencyLabel(connection, t)}</Text>
         </View>
         <View style={styles.zone}>
-          <Text style={styles.zoneLabel}>ACTIVE ZONE</Text>
-          <Text style={styles.zoneValue}>{activeZone(fleet)}</Text>
+          <Text style={styles.zoneLabel}>{t('zone.label')}</Text>
+          <Text style={styles.zoneValue}>{t(`zone.${activeZone(fleet)}`, { defaultValue: t('zone.none') })}</Text>
         </View>
         <Pressable
           style={[styles.estop, estopped ? styles.release : null]}
           onPress={() => void (estopped ? releaseEmergencyStop() : triggerEmergencyStop())}
           accessibilityRole="button"
-          accessibilityLabel={estopped ? 'Release emergency stop' : 'Emergency stop'}
+          accessibilityLabel={estopped ? t('dashboard.releaseLabel') : t('dashboard.estopLabel')}
         >
-          <Text style={[styles.estopText, estopped ? styles.releaseText : null]}>{estopped ? 'RELEASE' : 'E-STOP'}</Text>
+          <Text style={[styles.estopText, estopped ? styles.releaseText : null]}>
+            {estopped ? t('dashboard.release') : t('dashboard.estop')}
+          </Text>
         </Pressable>
       </View>
 
       <View style={styles.metrics}>
-        <MetricCard label="Active" value={active} tone={colors.accent} />
-        <MetricCard label="Charging" value={charging} tone={colors.path} />
-        <MetricCard label="Faulted" value={faulted} tone={colors.fault} />
+        <MetricCard label={t('dashboard.active')} value={active} tone={colors.accent} />
+        <MetricCard label={t('dashboard.charging')} value={charging} tone={colors.path} />
+        <MetricCard label={t('dashboard.faulted')} value={faulted} tone={colors.fault} />
       </View>
 
-      <Text style={styles.section}>Recent activity</Text>
-      {events.length === 0 ? <Text style={styles.empty}>Waiting for fleet activity</Text> : null}
+      <Text style={styles.section}>{t('dashboard.recent')}</Text>
+      {events.length === 0 ? <Text style={styles.empty}>{t('dashboard.waiting')}</Text> : null}
       {events.map((event) => (
         <View key={event.id} style={[styles.event, { borderLeftColor: eventColor(event) }]}>
-          <Text style={styles.eventText}>{event.message}</Text>
-          <Text style={styles.eventTime}>{formatTime(event.timestamp)}</Text>
+          <Text style={styles.eventText}>{eventMessage(event, t)}</Text>
+          <Text style={styles.eventTime}>{formatTime(event.timestamp, i18n.language)}</Text>
         </View>
       ))}
     </ScrollView>

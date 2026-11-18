@@ -49,7 +49,7 @@ Screens do not change. They only see `FleetDataSource`.
 
 ![Fleet Dashboard](docs/screenshots/FleetDashboard.png)
 
-**Fleet Monitor.** Warehouse floor in SVG. Tap a marker for speed, battery, destination, and faults.
+**Fleet Monitor.** Warehouse floor. The web build draws it with Babylon.js, and Android and iOS keep the SVG map. Tap a marker for speed, battery, destination, and faults. The header switches the interface between English and Japanese.
 
 ![Fleet Monitor](docs/screenshots/FleetMonitor.png)
 

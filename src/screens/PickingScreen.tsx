@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useRef, useState } from 'react';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import {
@@ -25,6 +26,7 @@ const STEPS: { id: Step; label: string }[] = [
 const WAYPOINT_NAMES = Object.keys(WAYPOINTS) as WaypointName[];
 
 export function PickingScreen() {
+  const { t } = useTranslation();
   const fleet = useFleetTelemetry();
   const { dispatchTask } = useFleet();
   const [permission, requestPermission] = useCameraPermissions();
@@ -35,7 +37,7 @@ export function PickingScreen() {
   const [destination, setDestination] = useState<WaypointName | null>(null);
   const [manual, setManual] = useState('');
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
+  const [noticeKey, setNoticeKey] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const lastScan = useRef<{ data: string; at: number } | null>(null);
   const scanning = step === 'bin' || step === 'pallet';
@@ -47,7 +49,7 @@ export function PickingScreen() {
     setAgvId(null);
     setDestination(null);
     setManual('');
-    setNotice(null);
+    setNoticeKey(null);
   }
 
   function applyCode(raw: string) {
@@ -85,11 +87,11 @@ export function PickingScreen() {
       return;
     }
     setSubmitting(true);
-    setNotice(null);
+    setNoticeKey(null);
     const accepted = await dispatchTask(agvId, destination, pallet ?? undefined);
     setSubmitting(false);
     if (!accepted) {
-      setNotice('Dispatch rejected. The vehicle may be faulted or the fleet is stopped.');
+      setNoticeKey('pick.rejected');
       return;
     }
     setStep('done');
@@ -104,7 +106,7 @@ export function PickingScreen() {
           return (
             <View key={item.id} style={[styles.step, reached ? styles.stepReached : null]}>
               <Text style={[styles.stepText, reached ? styles.stepTextReached : null]}>
-                {index + 1} {item.label}
+                {index + 1} {t(`pick.steps.${item.id}`)}
               </Text>
             </View>
           );
@@ -119,16 +121,16 @@ export function PickingScreen() {
               facing="back"
               barcodeScannerSettings={{ barcodeTypes: ['qr', 'code128', 'code39', 'ean13', 'datamatrix'] }}
               onBarcodeScanned={({ data }) => onBarcodeScanned(data)}
-              onMountError={(event) => setCameraError(event.message || 'Camera unavailable')}
+              onMountError={(event) => setCameraError(event.message || t('pick.cameraUnavailable'))}
             />
           ) : (
             <View style={styles.permission}>
               <Text style={styles.permissionText}>
-                {cameraError ?? (permission ? 'Camera access is off. Enter the code below.' : 'Checking camera…')}
+                {cameraError ?? (permission ? t('pick.cameraOff') : t('pick.cameraChecking'))}
               </Text>
               {permission && !permission.granted ? (
                 <Pressable style={styles.secondary} onPress={() => void requestPermission()} accessibilityRole="button">
-                  <Text style={styles.secondaryText}>Enable camera</Text>
+                  <Text style={styles.secondaryText}>{t('pick.enableCamera')}</Text>
                 </Pressable>
               ) : null}
             </View>
@@ -142,24 +144,24 @@ export function PickingScreen() {
           <TextInput
             value={manual}
             onChangeText={setManual}
-            placeholder={step === 'bin' ? 'Bin code' : 'Pallet ID'}
+            placeholder={step === 'bin' ? t('pick.binCode') : t('pick.palletId')}
             placeholderTextColor={colors.textMuted}
             autoCapitalize="characters"
             style={styles.input}
             onSubmitEditing={() => applyCode(manual)}
           />
           <Pressable style={styles.apply} onPress={() => applyCode(manual)} accessibilityRole="button">
-            <Text style={styles.applyText}>Use code</Text>
+            <Text style={styles.applyText}>{t('pick.useCode')}</Text>
           </Pressable>
         </View>
       ) : null}
 
-      <Summary label="Bin" value={bin} />
-      <Summary label="Pallet" value={pallet} />
+      <Summary label={t('pick.bin')} value={bin} />
+      <Summary label={t('pick.pallet')} value={pallet} />
 
       {step === 'agv' ? (
         <View style={styles.block}>
-          <Text style={styles.blockTitle}>Select target AGV</Text>
+          <Text style={styles.blockTitle}>{t('pick.selectAgv')}</Text>
           {fleet.map((agv) => {
             const blocked = agv.status === 'FAULT' || agv.status === 'ESTOP';
             return (
@@ -185,7 +187,7 @@ export function PickingScreen() {
 
       {step === 'dispatch' ? (
         <View style={styles.block}>
-          <Text style={styles.blockTitle}>Target waypoint for {agvId}</Text>
+          <Text style={styles.blockTitle}>{t('pick.waypointFor', { id: agvId })}</Text>
           <View style={styles.chips}>
             {WAYPOINT_NAMES.map((name) => {
               const selected = name === destination;
@@ -208,26 +210,26 @@ export function PickingScreen() {
             onPress={() => void dispatch()}
             accessibilityRole="button"
           >
-            <Text style={styles.primaryText}>{submitting ? 'Sending…' : 'Dispatch'}</Text>
+            <Text style={styles.primaryText}>{submitting ? t('pick.sending') : t('pick.dispatch')}</Text>
           </Pressable>
-          {notice ? <Text style={styles.notice}>{notice}</Text> : null}
+          {noticeKey ? <Text style={styles.notice}>{t(noticeKey)}</Text> : null}
         </View>
       ) : null}
 
       {step === 'done' ? (
         <View style={styles.block}>
           <Text style={styles.done}>
-            {agvId} is carrying {pallet} to {destination}.
+            {t('pick.done', { id: agvId, pallet, destination })}
           </Text>
           <Pressable style={styles.primary} onPress={reset} accessibilityRole="button">
-            <Text style={styles.primaryText}>New task</Text>
+            <Text style={styles.primaryText}>{t('pick.newTask')}</Text>
           </Pressable>
         </View>
       ) : null}
 
       {step !== 'bin' && step !== 'done' ? (
         <Pressable onPress={reset} accessibilityRole="button" style={styles.restart}>
-          <Text style={styles.restartText}>Restart task</Text>
+          <Text style={styles.restartText}>{t('pick.restart')}</Text>
         </Pressable>
       ) : null}
     </ScrollView>

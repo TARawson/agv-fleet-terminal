@@ -1,14 +1,17 @@
+import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { alarmText } from '../i18n/alarmText';
 import type { AGVTelemetry } from '../types/telemetry';
 import { colors, minTouchTarget } from '../theme/colors';
 import { StatusBadge } from './StatusBadge';
 
 export function AgvDetailModal({ agv, onClose }: { agv: AGVTelemetry | null; onClose: () => void }) {
+  const { t } = useTranslation();
   const batteryTone = !agv ? colors.accent : agv.batteryPercent <= 40 ? colors.warning : colors.accent;
 
   return (
     <Modal visible={agv !== null} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Dismiss vehicle details">
+      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel={t('vehicle.dismiss')}>
         <Pressable style={styles.sheet} onPress={() => undefined}>
           {agv ? (
             <>
@@ -16,20 +19,20 @@ export function AgvDetailModal({ agv, onClose }: { agv: AGVTelemetry | null; onC
                 <Text style={styles.title}>{agv.id}</Text>
                 <StatusBadge status={agv.status} />
               </View>
-              <Text style={styles.batteryLabel}>Battery {agv.batteryPercent.toFixed(0)}%</Text>
+              <Text style={styles.batteryLabel}>{t('vehicle.battery', { percent: agv.batteryPercent.toFixed(0) })}</Text>
               <View style={styles.batteryTrack}>
                 <View style={[styles.batteryFill, { width: `${Math.min(100, agv.batteryPercent)}%`, backgroundColor: batteryTone }]} />
               </View>
-              <DetailRow label="Speed" value={`${agv.speed.toFixed(1)} u/s`} />
-              <DetailRow label="Destination" value={agv.destination ?? 'None'} />
-              <DetailRow label="Payload" value={agv.payloadId ?? 'Empty'} />
+              <DetailRow label={t('vehicle.speed')} value={t('vehicle.speedValue', { speed: agv.speed.toFixed(1) })} />
+              <DetailRow label={t('vehicle.destination')} value={agv.destination ?? t('vehicle.none')} />
+              <DetailRow label={t('vehicle.payload')} value={agv.payloadId ?? t('vehicle.empty')} />
               {agv.errors.map((error) => (
                 <Text key={error.id} style={[styles.error, { color: error.severity === 'CRITICAL' ? colors.fault : colors.warning }]}>
-                  {error.severity} · {error.message}
+                  {t(`severity.${error.severity}`)} · {alarmText(t, error.code, error.message)}
                 </Text>
               ))}
               <Pressable style={styles.close} onPress={onClose} accessibilityRole="button">
-                <Text style={styles.closeText}>Close</Text>
+                <Text style={styles.closeText}>{t('vehicle.close')}</Text>
               </Pressable>
             </>
           ) : null}

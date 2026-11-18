@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { GestureResponderEvent } from 'react-native';
 import { Circle, G, Line, Rect, Svg, Text as SvgText } from 'react-native-svg';
@@ -102,6 +103,7 @@ function stationRect(name: WaypointName, stationWidth: number, stationHeight: nu
 }
 
 export function WarehouseCanvas({ fleet, width, height, selectedId, onSelect }: WarehouseCanvasProps) {
+  const { t } = useTranslation();
   const aisles: WaypointName[] = ['AISLE-1', 'AISLE-2', 'AISLE-3', 'AISLE-4'];
   const picks: WaypointName[] = ['PICK-A', 'PICK-B'];
   const chargers: WaypointName[] = ['CHARGE-1', 'CHARGE-2'];
@@ -175,7 +177,7 @@ export function WarehouseCanvas({ fleet, width, height, selectedId, onSelect }: 
       style={styles.hitLayer}
       onPress={selectAt}
       accessibilityRole="button"
-      accessibilityLabel="Warehouse floor"
+      accessibilityLabel={t('map.floor')}
     />
     </View>
   );

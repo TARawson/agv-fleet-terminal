@@ -7,7 +7,8 @@ export type FleetEventSeverity = 'INFO' | AlarmSeverity;
 
 export interface FleetEvent {
   id: string;
-  message: string;
+  messageKey: string;
+  messageParams: Record<string, string | number>;
   timestamp: number;
   severity: FleetEventSeverity;
 }
@@ -28,21 +29,6 @@ function eventId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function statusMessage(agv: AGVTelemetry): string {
-  switch (agv.status) {
-    case 'ESTOP':
-      return `${agv.id} emergency stop`;
-    case 'FAULT':
-      return `${agv.id} faulted`;
-    case 'CHARGING':
-      return `${agv.id} charging`;
-    case 'IDLE':
-      return `${agv.id} holding at ${agv.destination ?? 'waypoint'}`;
-    case 'NAVIGATING':
-      return `${agv.id} underway to ${agv.destination ?? 'waypoint'}`;
-  }
-}
-
 function diffFleet(previous: AGVTelemetry[], next: AGVTelemetry[]): FleetEvent[] {
   const events: FleetEvent[] = [];
   const now = Date.now();
@@ -55,7 +41,8 @@ function diffFleet(previous: AGVTelemetry[], next: AGVTelemetry[]): FleetEvent[]
     for (const error of newErrors) {
       events.push({
         id: eventId(),
-        message: `${agv.id} · ${error.message}`,
+        messageKey: 'events.alarm',
+        messageParams: { id: agv.id, code: error.code, message: error.message },
         timestamp: error.timestamp,
         severity: error.severity,
       });
@@ -63,7 +50,8 @@ function diffFleet(previous: AGVTelemetry[], next: AGVTelemetry[]): FleetEvent[]
     if (before.status !== agv.status && newErrors.length === 0) {
       events.push({
         id: eventId(),
-        message: statusMessage(agv),
+        messageKey: `events.${agv.status}`,
+        messageParams: { id: agv.id, place: agv.destination ?? '' },
         timestamp: now,
         severity: agv.status === 'FAULT' || agv.status === 'ESTOP' ? 'CRITICAL' : 'INFO',
       });
@@ -71,7 +59,8 @@ function diffFleet(previous: AGVTelemetry[], next: AGVTelemetry[]): FleetEvent[]
     if (before.destination !== agv.destination && agv.destination && before.status === agv.status) {
       events.push({
         id: eventId(),
-        message: `${agv.id} en route to ${agv.destination}`,
+        messageKey: 'events.enRoute',
+        messageParams: { id: agv.id, destination: agv.destination },
         timestamp: now,
         severity: 'INFO',
       });
@@ -84,7 +73,8 @@ function initialEvents(fleet: AGVTelemetry[]): FleetEvent[] {
   const alarms = fleet.flatMap((agv) =>
     agv.errors.map((error) => ({
       id: eventId(),
-      message: `${agv.id} · ${error.message}`,
+      messageKey: 'events.alarm',
+      messageParams: { id: agv.id, code: error.code, message: error.message },
       timestamp: error.timestamp,
       severity: error.severity,
     })),
@@ -93,7 +83,8 @@ function initialEvents(fleet: AGVTelemetry[]): FleetEvent[] {
     ...alarms,
     {
       id: eventId(),
-      message: `Fleet link established · ${fleet.length} units`,
+      messageKey: 'events.link',
+      messageParams: { count: fleet.length },
       timestamp: Date.now(),
       severity: 'INFO' as const,
     },
