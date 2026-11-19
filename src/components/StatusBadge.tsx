@@ -1,12 +1,14 @@
+import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import type { AGVStatus } from '../types/telemetry';
 import { statusColor } from '../theme/colors';
 
 export function StatusBadge({ status }: { status: AGVStatus }) {
+  const { t } = useTranslation();
   const color = statusColor(status);
   return (
     <View style={[styles.badge, { borderColor: color }]}>
-      <Text style={[styles.text, { color }]}>{status}</Text>
+      <Text style={[styles.text, { color }]}>{t(`status.${status}`)}</Text>
     </View>
   );
 }

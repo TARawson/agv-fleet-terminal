@@ -1,7 +1,8 @@
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { AgvDetailModal } from '../components/AgvDetailModal';
-import { WarehouseCanvas } from '../components/WarehouseCanvas';
+import { WarehouseView } from '../components/WarehouseView';
 import { useFleetTelemetry } from '../hooks/useFleetTelemetry';
 import { WAREHOUSE_BOUNDS } from '../types/telemetry';
 import type { AGVStatus } from '../types/telemetry';
@@ -10,6 +11,7 @@ import { colors, statusColor } from '../theme/colors';
 const LEGEND: AGVStatus[] = ['NAVIGATING', 'CHARGING', 'FAULT'];
 
 export function FleetMapScreen() {
+  const { t } = useTranslation();
   const fleet = useFleetTelemetry();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [box, setBox] = useState({ width: 0, height: 0 });
@@ -32,7 +34,7 @@ export function FleetMapScreen() {
         }}
       >
         {drawWidth > 0 && drawHeight > 0 ? (
-          <WarehouseCanvas
+          <WarehouseView
             width={drawWidth}
             height={drawHeight}
             fleet={fleet}
@@ -45,11 +47,11 @@ export function FleetMapScreen() {
         {LEGEND.map((status) => (
           <View key={status} style={styles.legendItem}>
             <View style={[styles.dot, { backgroundColor: statusColor(status) }]} />
-            <Text style={styles.legendText}>{status}</Text>
+            <Text style={styles.legendText}>{t(`status.${status}`)}</Text>
           </View>
         ))}
       </View>
-      <Text style={styles.hint}>Tap a vehicle for live diagnostics</Text>
+      <Text style={styles.hint}>{t('map.hint')}</Text>
       <AgvDetailModal agv={selected} onClose={() => setSelectedId(null)} />
     </View>
   );

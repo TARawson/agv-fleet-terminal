@@ -1,5 +1,7 @@
+import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { alarmText } from '../i18n/alarmText';
 import { useFleet, useFleetTelemetry } from '../hooks/useFleetTelemetry';
 import type { AlarmSeverity } from '../types/telemetry';
 import { colors, minTouchTarget } from '../theme/colors';
@@ -17,11 +19,12 @@ interface AlarmRow {
   timestamp: number;
 }
 
-function formatTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+function formatTime(timestamp: number, language: string): string {
+  return new Date(timestamp).toLocaleTimeString(language, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
 export function AlarmLogScreen() {
+  const { t, i18n } = useTranslation();
   const fleet = useFleetTelemetry();
   const { acknowledgeError } = useFleet();
   const [filter, setFilter] = useState<AlarmFilter>('ALL');
@@ -55,31 +58,33 @@ export function AlarmLogScreen() {
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
               >
-                <Text style={[styles.filterText, selected ? styles.filterTextSelected : null]}>{item}</Text>
+                <Text style={[styles.filterText, selected ? styles.filterTextSelected : null]}>
+                  {item === 'ALL' ? t('alarms.all') : t(`severity.${item}`)}
+                </Text>
               </Pressable>
             );
           })}
         </View>
       }
-      ListEmptyComponent={<Text style={styles.empty}>No active alarms</Text>}
+      ListEmptyComponent={<Text style={styles.empty}>{t('alarms.empty')}</Text>}
       renderItem={({ item }) => (
         <View style={styles.row}>
           <View style={styles.copy}>
             <Text style={[styles.severity, { color: item.severity === 'CRITICAL' ? colors.fault : colors.warning }]}>
-              {item.severity} · {item.agvId}
+              {t(`severity.${item.severity}`)} · {item.agvId}
             </Text>
-            <Text style={styles.message}>{item.message}</Text>
+            <Text style={styles.message}>{alarmText(t, item.code, item.message)}</Text>
             <Text style={styles.meta}>
-              {item.code} · {formatTime(item.timestamp)}
+              {item.code} · {formatTime(item.timestamp, i18n.language)}
             </Text>
           </View>
           <Pressable
             style={styles.clear}
             onPress={() => void acknowledgeError(item.agvId, item.errorId)}
             accessibilityRole="button"
-            accessibilityLabel={`Clear ${item.code} on ${item.agvId}`}
+            accessibilityLabel={t('alarms.clearLabel', { code: item.code, id: item.agvId })}
           >
-            <Text style={styles.clearText}>Clear</Text>
+            <Text style={styles.clearText}>{t('alarms.clear')}</Text>
           </Pressable>
         </View>
       )}

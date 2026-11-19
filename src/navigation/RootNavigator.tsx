@@ -1,5 +1,7 @@
+import { useTranslation } from 'react-i18next';
 import { NavigationContainer, DarkTheme, type Theme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { LanguageToggle } from '../components/LanguageToggle';
 import { AlarmLogScreen } from '../screens/AlarmLogScreen';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { FleetMapScreen } from '../screens/FleetMapScreen';
@@ -30,6 +32,7 @@ const navigationTheme: Theme = {
 };
 
 export function RootNavigator() {
+  const { t } = useTranslation();
   const fleet = useFleetTelemetry();
   const alarmCount = fleet.reduce((count, agv) => count + agv.errors.length, 0);
 
@@ -54,16 +57,22 @@ export function RootNavigator() {
           tabBarInactiveTintColor: colors.textMuted,
           tabBarLabelStyle: { fontSize: 13, fontWeight: '700' },
           tabBarHideOnKeyboard: true,
+          headerRight: () => <LanguageToggle />,
         }}
       >
-        <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'Fleet Dashboard' }} />
-        <Tab.Screen name="Map" component={FleetMapScreen} options={{ title: 'Fleet Monitor' }} />
-        <Tab.Screen name="Pick" component={PickingScreen} options={{ title: 'Task Terminal' }} />
+        <Tab.Screen
+          name="Dashboard"
+          component={DashboardScreen}
+          options={{ title: t('tabs.dashboard'), tabBarLabel: t('tabs.dashboardShort') }}
+        />
+        <Tab.Screen name="Map" component={FleetMapScreen} options={{ title: t('tabs.map'), tabBarLabel: t('tabs.mapShort') }} />
+        <Tab.Screen name="Pick" component={PickingScreen} options={{ title: t('tabs.pick'), tabBarLabel: t('tabs.pickShort') }} />
         <Tab.Screen
           name="Alarms"
           component={AlarmLogScreen}
           options={{
-            title: 'Diagnostics',
+            title: t('tabs.alarms'),
+            tabBarLabel: t('tabs.alarmsShort'),
             tabBarBadge: alarmCount > 0 ? alarmCount : undefined,
             tabBarBadgeStyle: { backgroundColor: colors.fault },
           }}
